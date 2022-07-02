@@ -67,6 +67,12 @@ app.post("/urls", (req, res) => {
 
 });
 
+app.post('/urls/:id', (req, res) => {
+  let longURL = req.body.longURL
+  urlDatabase[req.params.id] = longURL;
+  res.redirect('/urls');
+})
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
