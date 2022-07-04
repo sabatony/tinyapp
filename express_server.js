@@ -19,25 +19,49 @@ const generateRandomString = () => {
   return result;
 };
 
+const getUserByID = (id) => {
+  for (const userId in users) {
+    if (userId === id) {
+      return users[userId];
+    }
+  }
+  return null;
+};
+
+const getUserByEmail = (email) => {
+  for (const userId in users) {
+    if (users[userId].email === email) {
+      return users[userId];
+    }
+  }
+  return null;
+};
+
+const users = {};
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
+app.get("/register", (req, res) => {
+  res.render("register")
+});
+
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"]};
+  const templateVars = { urls: urlDatabase, user: req.cookies["user_id"] };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    username: req.cookies["username"]
+    user: req.cookies["user_id"]
   };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: req.cookies["user_id"]};
   res.render("urls_show", templateVars);
 });
 
@@ -85,9 +109,39 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("user_id");
   res.redirect("/urls");
 
+});
+
+app.post("/register", (req, res) => {
+  const { email, password } = req.body;
+
+  const foundUser = getUserByEmail(email);
+
+  if (email === "" || password === ""){
+    res.send("400 Bad Request ")
+  };
+
+  if (foundUser) {
+    return res.status(400).send("A user with that email already exists!");
+  }
+
+  const id = generateRandomString();
+  const newUser = {
+    id,
+    email,
+    password,
+  };
+  users[id] = newUser;
+
+  console.log(users);
+
+  
+
+res.cookie("user_id", id);
+
+  res.redirect("/urls");
 });
 
 app.listen(PORT, () => {
