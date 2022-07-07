@@ -12,9 +12,10 @@
     </div>
       <%if (user) { %>
         <form action="/logout" method="post">
-          <span>logged in as <%= user %></span>
+          <span>logged in as <%= user.email %></span>
           <label form="name"> </label>
           <button type="submit"> logout </button>
+        </form>
 
       <%} else { %>
         <a href="/register">register</a>&nbsp;&nbsp;&nbsp;&nbsp;

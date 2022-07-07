@@ -36,32 +36,47 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 app.get("/login", (req, res) => {
+  if (req.cookies.userId) {
+    res.redirect("/urls")
+  }
   res.render("login")
 });
 
 app.get("/register", (req, res) => {
+  if (req.cookies.userId) {
+    res.redirect("/urls")
+  }
   res.render("register")
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, user: req.cookies["userId"] };
+  console.log(users[req.cookies["userId"]]);
+  const templateVars = { urls: urlDatabase, user: users[req.cookies["userId"]] };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    user: req.cookies["userId"]
+    user: users[req.cookies["userId"]]
   };
-  res.render("urls_new", templateVars);
+  if (!req.cookies.userId) {
+    res.redirect("/login");
+  } else {
+    res.render("urls_new", templateVars);
+  }
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: req.cookies["userId"]};
+  console.log(req.cookies["userId"]);
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies["userId"]]};
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
+  if (!longURL) {
+    res.send("URL doesn't exist");
+  }
   res.redirect(longURL);
 });
 
@@ -76,7 +91,10 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
+  if (!req.cookies["userId"]) {
+    res.send("Login to shorten URLs");
+  }
+  
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
   urlDatabase[shortURL] = longURL;
@@ -110,11 +128,12 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
+  console.log("test")
   res.clearCookie("userId");
-  res.clearCookie("username");
   res.redirect("/urls");
 
 });
+
 
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
