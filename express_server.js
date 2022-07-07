@@ -19,6 +19,15 @@ const generateRandomString = () => {
   return result;
 };
 
+const getUserByEmail = (email) => {
+  for(const userId in users) {
+    if(users[userId].email === email) {
+      return users[userId];
+    }
+  }
+  return null;
+}
+
 
 const users = {};
 
@@ -83,13 +92,9 @@ app.post("/urls/:id", (req, res) => {
 
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-  let foundUser;
 
-  for(const userId in users) {
-    if(users[userId].email === email) {
-      foundUser = users[userId]
-    }
-  }
+  const foundUser = getUserByEmail(email);
+  
 
   if (!foundUser) {
     return res.status(400).send("No user with that email found!");
@@ -113,17 +118,12 @@ app.post("/logout", (req, res) => {
 
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
-  let foundUser;
+
+  const foundUser = getUserByEmail(email);
 
   if (email === "" || password === ""){
     res.send("400 Bad Request ")
   };
-
-  for(const userId in users) {
-    if(users[userId].email === email) {
-      foundUser = users[userId]
-    }
-  }
 
   if (foundUser) {
     return res.status(400).send("A user with that email already exists");
