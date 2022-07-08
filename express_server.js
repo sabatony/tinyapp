@@ -26,32 +26,50 @@ const getUserByEmail = (email) => {
     }
   }
   return null;
+};
+
+const urlsForUser = (id) => {
+  let userUrls = {};
+  for (const shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].userId === id) {
+      userUrls[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  return userUrls;
 }
 
 
 const users = {};
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
 };
+
 app.get("/login", (req, res) => {
   if (req.cookies.userId) {
-    res.redirect("/urls")
+    return res.redirect("/urls")
   }
   res.render("login")
 });
 
 app.get("/register", (req, res) => {
   if (req.cookies.userId) {
-    res.redirect("/urls")
+    return res.redirect("/urls")
   }
   res.render("register")
 });
 
 app.get("/urls", (req, res) => {
-  console.log(users[req.cookies["userId"]]);
-  const templateVars = { urls: urlDatabase, user: users[req.cookies["userId"]] };
+  const userID = req.cookies["userId"];
+  const userUrls = urlsForUser(userID);
+  let templateVars = {urls: userUrls, user: users[userID]};
   res.render("urls_index", templateVars);
 });
 
@@ -67,17 +85,24 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  console.log(req.cookies["userId"]);
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], user: users[req.cookies["userId"]]};
-  res.render("urls_show", templateVars);
+  const userID = req.cookies["userId"];
+  const userUrls = urlsForUser(userID);
+  if (urlDatabase[req.params.shortURL] && req.cookies["userId"] === urlDatabase[req.params.shortURL].userId) {
+    let templateVars = {urls: userUrls, user: users[userID], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL};
+  return res.render("urls_show", templateVars);
+  } 
+ 
+  res.send("URL does not belong to you.")
+  
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
-  if (!longURL) {
-    res.send("URL doesn't exist");
+  if (!urlDatabase[req.params.shortURL]) {
+    return res.send("URL does not exist");
   }
+  const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
+
 });
 
 app.get("/urls.json", (req, res) => {
@@ -85,6 +110,20 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
+  if (!urlDatabase[req.params.shortURL]) {
+    return res.send("URL does not exist");
+  }
+
+  if (!req.cookies["userId"]) {
+    return res.send("Login to delete URLs")
+  }
+
+  if (req.cookies["userId"] !== urlDatabase[req.params.shortURL].userId) {
+    return res.send("This URL does not belong to you.")
+  }
+
+
+
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls")
 
@@ -92,19 +131,33 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 app.post("/urls", (req, res) => {
   if (!req.cookies["userId"]) {
-    res.send("Login to shorten URLs");
+    return res.send("Login to shorten urls")
   }
   
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
-  urlDatabase[shortURL] = longURL;
+  urlDatabase[shortURL] = {
+    longURL: req.body.longURL,
+    userId: req.cookies["userId"]
+  }
   res.redirect(`/urls/${shortURL}`);
 
 });
 
 app.post("/urls/:id", (req, res) => {
+  if (!urlDatabase[req.params.shortURL]) {
+    return res.send("URL does not exist");
+  }
+
+  if (!req.cookies["userId"]) {
+    return res.send("Login to delete URLs")
+  }
+
+  if (req.cookies["userId"] !== urlDatabase[req.params.shortURL].userId) {
+    return res.send("This URL does not belong to you.")
+  }
   let longURL = req.body.longURL
-  urlDatabase[req.params.id] = longURL;
+  urlDatabase[req.params.id].longURL = longURL;
   res.redirect("/urls");
 });
 
@@ -121,6 +174,7 @@ app.post("/login", (req, res) => {
   if (foundUser.password !== password) {
     return res.status(400).send("incorrect password")
   }
+
 
   res.cookie("userId", foundUser.id);
 

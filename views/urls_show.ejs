@@ -8,10 +8,12 @@
 
 <body>
   <%- include('partials/_header') %>
+  <% if (user) { %>
+    <% if (urls[shortURL]) { %>
   <div class="card text-center">
       <div class="card-header"></div>
       <div class="card-body">
-        <h5 class="card-title">TinyURL for: <%= longURL %></h5>
+        <h5 class="card-title">TinyURL for: <%= urls[shortURL].longURL %></h5>
         <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
       </div>
     <div class="card-footer text-muted">
@@ -21,7 +23,14 @@
         <input type="text" name="longURL" id="longURL" value="<%= longURL %>">
         <button type="submit">Submit</button>
     </div>
+  </form>
   </div>
+  <% } else { %>
+    <h4>You cannot see this URL because it does not belong to you</h4>
+  <% } %>
+  <% } else { %>
+    <h5>You must login to see this URL</h5>
+  <% } %>
   <!-- Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
