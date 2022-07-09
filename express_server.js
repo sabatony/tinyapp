@@ -4,8 +4,14 @@ const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
-const cookieParser = require('cookie-parser');
-app.use(cookieParser());
+//const cookieParser = require('cookie-parser');
+const cookieSession = require("cookie-session")
+//app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['dinosaur'],
+  maxAge: 24 * 60 * 60 * 1000
+}))
 
 const bcrypt = require('bcryptjs');
 
@@ -55,21 +61,21 @@ const urlDatabase = {
 };
 
 app.get("/login", (req, res) => {
-  if (req.cookies.userId) {
+  if (req.session.userId) {
     return res.redirect("/urls")
   }
   res.render("login")
 });
 
 app.get("/register", (req, res) => {
-  if (req.cookies.userId) {
+  if (req.session.userId) {
     return res.redirect("/urls")
   }
   res.render("register")
 });
 
 app.get("/urls", (req, res) => {
-  const userID = req.cookies["userId"];
+  const userID = req.session.userId;
   const userUrls = urlsForUser(userID);
   let templateVars = {urls: userUrls, user: users[userID]};
   res.render("urls_index", templateVars);
@@ -77,9 +83,9 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    user: users[req.cookies["userId"]]
+    user: users[req.session.userId]
   };
-  if (!req.cookies.userId) {
+  if (!req.session.userId) {
     res.redirect("/login");
   } else {
     res.render("urls_new", templateVars);
@@ -87,9 +93,9 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  const userID = req.cookies["userId"];
+  const userID = req.session.userId;
   const userUrls = urlsForUser(userID);
-  if (urlDatabase[req.params.shortURL] && req.cookies["userId"] === urlDatabase[req.params.shortURL].userId) {
+  if (urlDatabase[req.params.shortURL] && req.session.userId === urlDatabase[req.params.shortURL].userId) {
     let templateVars = {urls: userUrls, user: users[userID], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL};
   return res.render("urls_show", templateVars);
   } 
@@ -116,11 +122,11 @@ app.post("/urls/:shortURL/delete", (req, res) => {
     return res.send("URL does not exist");
   }
 
-  if (!req.cookies["userId"]) {
+  if (!req.session.userId) {
     return res.send("Login to delete URLs")
   }
 
-  if (req.cookies["userId"] !== urlDatabase[req.params.shortURL].userId) {
+  if (req.session.userId !== urlDatabase[req.params.shortURL].userId) {
     return res.send("This URL does not belong to you.")
   }
 
@@ -132,7 +138,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  if (!req.cookies["userId"]) {
+  if (!req.session.userId) {
     return res.send("Login to shorten urls")
   }
   
@@ -140,7 +146,7 @@ app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
-    userId: req.cookies["userId"]
+    userId: req.session.userId
   }
   res.redirect(`/urls/${shortURL}`);
 
@@ -151,11 +157,11 @@ app.post("/urls/:id", (req, res) => {
     return res.send("URL does not exist");
   }
 
-  if (!req.cookies["userId"]) {
+  if (!req.session.userId) {
     return res.send("Login to delete URLs")
   }
 
-  if (req.cookies["userId"] !== urlDatabase[req.params.shortURL].userId) {
+  if (req.session.userId !== urlDatabase[req.params.shortURL].userId) {
     return res.send("This URL does not belong to you.")
   }
   let longURL = req.body.longURL
@@ -180,14 +186,16 @@ app.post("/login", (req, res) => {
   }
 
 
-  res.cookie("userId", foundUser.id);
+  //res.cookie("userId", foundUser.id);
+  req.session.userId = foundUser.id;
 
   res.redirect("/urls")
 });
 
 app.post("/logout", (req, res) => {
   console.log("test")
-  res.clearCookie("userId");
+ // res.clearCookie("userId");
+  req.session = null;
   res.redirect("/urls");
 
 });
@@ -217,7 +225,8 @@ app.post("/register", (req, res) => {
 
   users[id] = newUser;
   console.log(users);
-  res.cookie("userId", id);
+  //res.cookie("userId", id);
+  req.session.userId = id;
 
   res.redirect("/urls");
 
