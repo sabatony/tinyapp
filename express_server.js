@@ -7,6 +7,8 @@ app.use(bodyParser.urlencoded({extended: true}));
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
 
+const bcrypt = require('bcryptjs');
+
 app.set("view engine", "ejs");
 
 const generateRandomString = () => {
@@ -165,13 +167,15 @@ app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
   const foundUser = getUserByEmail(email);
+
+  const passwordMatches = bcrypt.compareSync(password, foundUser.password);
   
 
   if (!foundUser) {
     return res.status(400).send("No user with that email found!");
   }
 
-  if (foundUser.password !== password) {
+  if (!passwordMatches) {
     return res.status(400).send("incorrect password")
   }
 
@@ -191,6 +195,8 @@ app.post("/logout", (req, res) => {
 
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
+  const salt = bcrypt.genSaltSync(10);
+  const hash = bcrypt.hashSync(password, salt);
 
   const foundUser = getUserByEmail(email);
 
@@ -206,7 +212,7 @@ app.post("/register", (req, res) => {
   const newUser = {
     id,
     email,
-    password
+    password: hash
   };
 
   users[id] = newUser;
