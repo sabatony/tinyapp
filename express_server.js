@@ -1,3 +1,4 @@
+const { getUserByEmail } = require('./helpers.js');
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
@@ -11,7 +12,7 @@ app.use(cookieSession({
   name: 'session',
   keys: ['dinosaur'],
   maxAge: 24 * 60 * 60 * 1000
-}))
+}));
 
 const bcrypt = require('bcryptjs');
 
@@ -27,14 +28,6 @@ const generateRandomString = () => {
   return result;
 };
 
-const getUserByEmail = (email) => {
-  for(const userId in users) {
-    if(users[userId].email === email) {
-      return users[userId];
-    }
-  }
-  return null;
-};
 
 const urlsForUser = (id) => {
   let userUrls = {};
@@ -44,7 +37,7 @@ const urlsForUser = (id) => {
     }
   }
   return userUrls;
-}
+};
 
 
 const users = {};
@@ -174,7 +167,7 @@ app.post("/urls/:id", (req, res) => {
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
-  const foundUser = getUserByEmail(email);
+  const foundUser = getUserByEmail(email, users);
 
   const passwordMatches = bcrypt.compareSync(password, foundUser.password);
   
@@ -208,7 +201,7 @@ app.post("/register", (req, res) => {
   const salt = bcrypt.genSaltSync(10);
   const hash = bcrypt.hashSync(password, salt);
 
-  const foundUser = getUserByEmail(email);
+  const foundUser = getUserByEmail(email, users);
 
   if (email === "" || password === ""){
     res.send("400 Bad Request ")
