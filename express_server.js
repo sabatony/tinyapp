@@ -153,6 +153,10 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => {
+  let longURL = req.body.longURL
+  urlDatabase[req.params.id].longURL = longURL;
+  res.redirect("/urls");
+
   if (!urlDatabase[req.params.shortURL]) {
     return res.send("URL does not exist");
   }
@@ -164,9 +168,7 @@ app.post("/urls/:id", (req, res) => {
   if (req.session.userId !== urlDatabase[req.params.shortURL].userId) {
     return res.send("This URL does not belong to you.")
   }
-  let longURL = req.body.longURL
-  urlDatabase[req.params.id].longURL = longURL;
-  res.redirect("/urls");
+  
 });
 
 app.post("/login", (req, res) => {
