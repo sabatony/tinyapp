@@ -5,9 +5,9 @@ const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
-//const cookieParser = require('cookie-parser');
+
 const cookieSession = require("cookie-session")
-//app.use(cookieParser());
+
 app.use(cookieSession({
   name: 'session',
   keys: ['dinosaur'],
@@ -55,16 +55,16 @@ const urlDatabase = {
 
 app.get("/login", (req, res) => {
   if (req.session.userId) {
-    return res.redirect("/urls")
+    return res.redirect("/urls");
   }
-  res.render("login")
+  res.render("login");
 });
 
 app.get("/register", (req, res) => {
   if (req.session.userId) {
-    return res.redirect("/urls")
+    return res.redirect("/urls");
   }
-  res.render("register")
+  res.render("register");
 });
 
 app.get("/urls", (req, res) => {
@@ -93,7 +93,7 @@ app.get("/urls/:shortURL", (req, res) => {
   return res.render("urls_show", templateVars);
   } 
  
-  res.send("URL does not belong to you.")
+  res.send("URL does not belong to you.");
   
 });
 
@@ -101,7 +101,7 @@ app.get("/u/:shortURL", (req, res) => {
   if (!urlDatabase[req.params.shortURL]) {
     return res.send("URL does not exist");
   }
-  const longURL = urlDatabase[req.params.shortURL].longURL;
+  const longURL = urlDatabase[req.params.shortURL].longURL
   res.redirect(longURL);
 
 });
@@ -116,37 +116,37 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   }
 
   if (!req.session.userId) {
-    return res.send("Login to delete URLs")
+    return res.send("Login to delete URLs");
   }
 
   if (req.session.userId !== urlDatabase[req.params.shortURL].userId) {
-    return res.send("This URL does not belong to you.")
+    return res.send("This URL does not belong to you.");
   }
 
-
-
   delete urlDatabase[req.params.shortURL];
-  res.redirect("/urls")
+  res.redirect("/urls");
 
 });
 
 app.post("/urls", (req, res) => {
   if (!req.session.userId) {
-    return res.send("Login to shorten urls")
+    return res.send("Login to shorten urls");
   }
   
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
+ 
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
     userId: req.session.userId
   }
+  
   res.redirect(`/urls/${shortURL}`);
 
 });
 
 app.post("/urls/:id", (req, res) => {
-  let longURL = req.body.longURL
+  let longURL = req.body.longURL;
   urlDatabase[req.params.id].longURL = longURL;
   res.redirect("/urls");
 
@@ -155,11 +155,11 @@ app.post("/urls/:id", (req, res) => {
   }
 
   if (!req.session.userId) {
-    return res.send("Login to delete URLs")
+    return res.send("Login to delete URLs");
   }
 
   if (req.session.userId !== urlDatabase[req.params.shortURL].userId) {
-    return res.send("This URL does not belong to you.")
+    return res.send("This URL does not belong to you.");
   }
   
 });
@@ -171,25 +171,20 @@ app.post("/login", (req, res) => {
 
   const passwordMatches = bcrypt.compareSync(password, foundUser.password);
   
-
   if (!foundUser) {
     return res.status(400).send("No user with that email found!");
   }
 
   if (!passwordMatches) {
-    return res.status(400).send("incorrect password")
+    return res.status(400).send("incorrect password");
   }
 
-
-  //res.cookie("userId", foundUser.id);
   req.session.userId = foundUser.id;
-
-  res.redirect("/urls")
+  res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
   console.log("test")
- // res.clearCookie("userId");
   req.session = null;
   res.redirect("/urls");
 
@@ -203,9 +198,9 @@ app.post("/register", (req, res) => {
 
   const foundUser = getUserByEmail(email, users);
 
-  if (email === "" || password === ""){
-    res.send("400 Bad Request ")
-  };
+  if (email === "" || password === "") {
+    res.send("400 Bad Request ");
+  }
 
   if (foundUser) {
     return res.status(400).send("A user with that email already exists");
@@ -219,8 +214,6 @@ app.post("/register", (req, res) => {
   };
 
   users[id] = newUser;
-  console.log(users);
-  //res.cookie("userId", id);
   req.session.userId = id;
 
   res.redirect("/urls");
